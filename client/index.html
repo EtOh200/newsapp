@@ -8,10 +8,46 @@
   </head>
   <body>
     <h1>News App</h1>
-    <div id="contents">
+    <!-- <div id="contents"> -->
+      <input id="name"/>
+      <textarea id="message"></textarea> 
+      <button onClick = "fire()" >Send</button>
+      <div id='messages'></div>
       <!-- Placeholder for react app -->
     </div>
     <!-- accesses bundle from webpack -->
+    <script> 
+    //first check for client ID
+    const getElement = (id) => document.getElementById(id);
+
+    const addMessage = (message) => {
+      const pTag = document.createElement('p');
+      pTag.appendChild(document.createTextNode(message));
+      getElement('messages').appendChild(pTag);
+    };
+
+    const ws = new WebSocket('ws://localhost:3030');
+
+    ws.onopen = () => {
+      console.log('Now connected');
+    };
+
+    //event listener for client receiving message from the client
+    //This will automatic update the page. 
+    ws.onmessage = (event) => {
+      const messages = JSON.parse(event.data);
+      messages.forEach(addMessage);
+    };
+
+    const fire = () => {
+    //grabs data from form(client)
+    const username = getElement('name').value || '???'
+    //WS method of sending strings 
+    ws.send(`${username}: ${getElement('message').value}`);
+    getElement('message').value = '';
+    };
+
+    </script>
     <script type="text/javascript" src="./build/bundle.js"></script>
   </body>
 </html>

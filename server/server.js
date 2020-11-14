@@ -3,7 +3,37 @@ const Redis = require('ioredis');
 const bodyParser = require('body-parser');
 const path = require('path');
 
+const WebSocket = require('ws'); 
+const { Socket } = require('dgram');
+
 const app = express();
+
+//connect ws to port
+const socketServer = new WebSocket.Server({port:3030});
+const messages = ['Start news Feed!'];
+
+socketServer.on('connection', (socketClient) => {
+    //connection event is fired when frontend client hits this server
+    console.log('connected');
+    console.log('Number of clients: ', socketServer.clients.size);
+    socketClient.send(JSON.stringify(messages));
+
+    socketClient.on('message', (message) => {
+        messages.push(message);
+        console.log(socketServer.clients)
+        socketServer.clients.forEach((client) => {
+            if(client.readyState === WebSocket.OPEN) {
+                client.send(JSON.stringify([message]));
+            }
+        });
+    });
+
+    //client methods are nested inside server connection
+    socketClient.on('close', (socketClient) => {
+        console.log('closed');
+        console.log('Number of clients: ', socketServer.clients.size);
+    });
+});
 
 //parsing requests
 app.use(bodyParser({ urlencoded: true }));
@@ -11,6 +41,12 @@ app.use(express.json())
 
 //serve static files
 app.use(express.static('client'));
+
+//TESTING WEBSOCKET
+app.get('/', (req,res) => {
+    res.sendFile(path.join(__dirname, '/client/index.html'))
+})
+
 
 const channel = "hi"
 //use to add subscriber to certain channel
@@ -81,6 +117,8 @@ app.post('/login', (req, res) => {
 app.get('/userview', /**send userid? and sendFile userview? */)
 
 app.get('/adminview', /**send userid? and sendFile adminview? */)
+
+
 
 
 const PORT = 3000;
